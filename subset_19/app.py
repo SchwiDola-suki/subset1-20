@@ -23,7 +23,25 @@ else:
 
 # ====== 页面配置 ====== #
 st.set_page_config(layout="wide")
-st.title("🎵 音乐-图像 匹配标注工具（三分类）")
+st.title("🎵 音乐-图像 匹配标注")
+
+# ====== 项目说明 ====== #
+st.markdown(
+    """
+    <div style='background-color:#f0f2f6; padding: 20px; border-radius: 10px;'>
+        <h3>📘 使用说明</h3>
+        <ul>
+            <li>🔊 每页播放一首音乐，下面显示多张候选图像。</li>
+            <li>✅ 对每张图像选择是否与音乐意境相符：“是”、“否” 或 “中性”（不想选就保留中性就行）。</li>
+            <li>💾 每次点击“保存当前页标注”按钮将保存当前结果（不保存不会被记录）。</li>
+            <li>➡️ 通过“上一首 / 下一首”按钮浏览其他音乐。</li>
+            <li>📥 最后点击底部“下载全部标注为 CSV 文件”按钮获取所有的标注记录，发送给我，谢谢。</li>
+            <li> 能力有限，麻烦翻页后手动滑到顶部播放音乐。</li>
+        </ul>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 # ====== 读取音频路径 ====== #
 def find_audio(song_id):
@@ -48,7 +66,7 @@ def render_image_columns(song_id, row, col_names, group_label, section_title):
             img_path = os.path.join(IMAGE_DIR, img_id)
             with cols[col_idx]:
                 if os.path.exists(img_path):
-                    st.image(img_path, use_column_width=True, caption=img_id)
+                    st.image(img_path, use_container_width=True, caption=img_id)  # ✅ 替换为 use_container_width
                     key_base = f"{song_id}_{col}"
                     selected_label = st.radio(
                         "",
@@ -108,19 +126,40 @@ all_rows += render_image_columns(song_id, row, city_cols, group_label="city", se
 st.markdown("---")
 col1, col2, col3 = st.columns([1, 1, 2])
 
+# 初始化保存状态（仅首次）
+if "saved_rows" not in st.session_state:
+    st.session_state.saved_rows = []
+    st.session_state.annotated = set()
+
 with col1:
     if st.button("⬅️ 上一首") and st.session_state.page_index > 0:
         st.session_state.page_index -= 1
-        st.experimental_rerun()
+        st.rerun()
+
 with col2:
     if st.button("➡️ 下一首") and st.session_state.page_index < len(df) - 1:
         st.session_state.page_index += 1
-        st.experimental_rerun()
+        st.rerun()
+
 with col3:
     if st.button("✅ 保存当前页标注（翻页前要按一下）"):
         for r in all_rows:
-            if (r['song_id'], r['image_id']) not in annotated:
-                saved_rows.append(r)
-                annotated.add((r['song_id'], r['image_id']))
-        pd.DataFrame(saved_rows).to_csv(OUTPUT_CSV, index=False, encoding="utf-8-sig")
-        st.success(f"✅ 已保存至本地文件：{OUTPUT_CSV}")
+            if (r['song_id'], r['image_id']) not in st.session_state.annotated:
+                st.session_state.saved_rows.append(r)
+                st.session_state.annotated.add((r['song_id'], r['image_id']))
+        st.success("✅ 当前页标注已保存")
+
+# ====== 下载按钮区 ====== #
+st.markdown("### 📦 下载全部标注结果")
+
+if st.session_state.saved_rows:
+    df_export = pd.DataFrame(st.session_state.saved_rows)
+    csv_data = df_export.to_csv(index=False, encoding="utf-8-sig").encode("utf-8-sig")
+    st.download_button(
+        label="📥 下载全部标注为 CSV 文件",
+        data=csv_data,
+        file_name="final_annotations.csv",
+        mime="text/csv"
+    )
+else:
+    st.info("⚠️ 当前尚未保存任何标注，请先开始标注并保存")
