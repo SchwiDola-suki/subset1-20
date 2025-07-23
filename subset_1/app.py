@@ -4,10 +4,10 @@ import os
 import glob
 
 # ====== 文件路径设置 ====== #
-CSV_PATH = "music_image_combined.csv"
-AUDIO_DIR = "audio"
-IMAGE_DIR = "image"
-OUTPUT_CSV = "final_annotations.csv"
+CSV_PATH = os.path.join(os.path.dirname(__file__), "music_image_combined.csv")
+AUDIO_DIR = os.path.join(os.path.dirname(__file__), "audio")
+IMAGE_DIR = os.path.join(os.path.dirname(__file__), "image")
+OUTPUT_CSV = os.path.join(os.path.dirname(__file__), "final_annotations.csv")
 
 # ====== 加载数据 ====== #
 df = pd.read_csv(CSV_PATH)

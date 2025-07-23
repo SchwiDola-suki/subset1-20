@@ -66,7 +66,7 @@ def render_image_columns(song_id, row, col_names, group_label, section_title):
             img_path = os.path.join(IMAGE_DIR, img_id)
             with cols[col_idx]:
                 if os.path.exists(img_path):
-                    st.image(img_path, use_column_width=True, caption=img_id)  # ✅ 替换为 use_container_width
+                    st.image(img_path, use_container_width=True, caption=img_id)  # ✅ 替换为 use_container_width
                     key_base = f"{song_id}_{col}"
                     selected_label = st.radio(
                         "",
