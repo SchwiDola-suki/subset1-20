@@ -3,10 +3,17 @@ import pandas as pd
 import os
 import glob
 
+import os
+print("当前脚本路径 (__file__):", __file__)
+print("当前工作目录 (os.getcwd()):", os.getcwd())
+print("是否存在 CSV:", os.path.exists(os.path.join(os.path.dirname(__file__), "music_image_combined.csv")))
+
 # ====== 文件路径设置 ====== #
-CSV_PATH = "music_image_combined.csv"
-AUDIO_DIR = "audio"
-IMAGE_DIR = "image"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+CSV_PATH = os.path.join(BASE_DIR, "music_image_combined.csv")
+AUDIO_DIR = os.path.join(BASE_DIR, "audio")
+IMAGE_DIR = os.path.join(BASE_DIR, "image")
 OUTPUT_CSV = "final_annotations.csv"
 
 # ====== 加载数据 ====== #
