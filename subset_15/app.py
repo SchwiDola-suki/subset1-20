@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 import glob
+import random
 
 import os
 print("当前脚本路径 (__file__):", __file__)
@@ -63,17 +64,31 @@ def render_image_columns(song_id, row, col_names, group_label, section_title):
     cols_per_row = 5
     image_data = []
 
+    # 收集该组所有有效图片
     for col in col_names:
         if col in row and pd.notna(row[col]):
             image_data.append((col, row[col]))
 
+    # 固定随机种子（同一首歌+同一组别，顺序稳定；不同歌/组别不同）
+    random.seed(f"{song_id}-{group_label}")
+    random.shuffle(image_data)
+
+    # 限制最多 15 张
+    image_data = image_data[:15]
+
+    # 按行渲染
     for row_start in range(0, len(image_data), cols_per_row):
         cols = st.columns(cols_per_row)
         for col_idx, (col, img_id) in enumerate(image_data[row_start:row_start + cols_per_row]):
             img_path = os.path.join(IMAGE_DIR, img_id)
             with cols[col_idx]:
                 if os.path.exists(img_path):
-                    st.image(img_path, use_container_width=True, caption=img_id)  # ✅ 替换为 use_container_width
+                    # 兼容不同版本的 Streamlit
+                    try:
+                        st.image(img_path, use_container_width=True, caption=img_id)
+                    except TypeError:
+                        st.image(img_path, use_column_width=True, caption=img_id)
+
                     key_base = f"{song_id}_{col}"
                     selected_label = st.radio(
                         "",
@@ -82,10 +97,6 @@ def render_image_columns(song_id, row, col_names, group_label, section_title):
                         horizontal=True,
                         index=0,
                         label_visibility="collapsed"
-                    )
-                    st.markdown(
-                        f"<style>div[data-baseweb='radio'] label span {{ font-size: 18px !important; }}</style>",
-                        unsafe_allow_html=True
                     )
                     if selected_label != "中性":
                         rows.append({
